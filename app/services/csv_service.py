@@ -39,6 +39,7 @@ REQUIRED_IMPORT_COLUMNS = {"full_name", "gender", "candidate_type", "email", "ph
 ALLOWED_CANDIDATE_TYPES = {"groom", "bride"}
 ALLOWED_GENDERS = {"male", "female"}
 DATE_FORMATS = ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%m/%d/%Y", "%d.%m.%Y")
+MAX_IMPORT_ROWS = 1000
 
 
 def _parse_dob(raw_value):
@@ -59,8 +60,10 @@ def _parse_dob(raw_value):
 def import_profiles_csv(file_stream, created_by_user_id):
     """
     Bulk import candidate profiles from a CSV file-like object.
-    Each row is processed in its own savepoint, so a bad row is skipped
-    without corrupting the rest of the import batch.
+    Each row is committed independently (not via SAVEPOINT/begin_nested,
+    which is unreliable on SQLite without extra driver configuration) —
+    so a bad row is simply rolled back and skipped without affecting
+    rows already committed or rows still to come.
     Returns (success_count, errors[list of strings]).
     """
     text = file_stream.read()
@@ -76,13 +79,15 @@ def import_profiles_csv(file_stream, created_by_user_id):
         missing = REQUIRED_IMPORT_COLUMNS - {(f or "").strip() for f in (reader.fieldnames or [])}
         return 0, [f"Missing required columns: {', '.join(sorted(missing))}"]
 
+    rows = list(reader)
+    if len(rows) > MAX_IMPORT_ROWS:
+        return 0, [f"CSV has {len(rows)} rows, which exceeds the {MAX_IMPORT_ROWS}-row import limit. "
+                   f"Please split the file into smaller batches."]
+
     success = 0
     errors = []
 
-    for i, row in enumerate(reader, start=2):
-        # Each row gets its own SAVEPOINT so a failure here can be rolled back
-        # in isolation without poisoning the rest of the batch.
-        savepoint = db.session.begin_nested()
+    for i, row in enumerate(rows, start=2):
         try:
             full_name = (row.get("full_name") or "").strip()
             email = (row.get("email") or "").strip().lower()
@@ -139,13 +144,12 @@ def import_profiles_csv(file_stream, created_by_user_id):
             db.session.flush()
             profile.profile_code = _generate_profile_code(profile)
 
-            savepoint.commit()
+            db.session.commit()
             success += 1
         except Exception as e:  # noqa: BLE001
-            savepoint.rollback()
+            db.session.rollback()
             errors.append(f"Row {i}: {str(e)}")
 
-    db.session.commit()
     return success, errors
 
 

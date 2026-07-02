@@ -1,5 +1,6 @@
 from difflib import SequenceMatcher
 from app.models import Profile
+from app.extensions import db
 
 
 def generate_profile_code(profile):
@@ -42,9 +43,25 @@ def apply_search_filters(query, args):
     if city:
         query = query.filter(Profile.current_city.ilike(f"%{city}%"))
 
+    state = args.get("state")
+    if state:
+        query = query.filter(Profile.current_state.ilike(f"%{state}%"))
+
+    country = args.get("country")
+    if country:
+        query = query.filter(Profile.current_country.ilike(f"%{country}%"))
+
+    native_place = args.get("native_place")
+    if native_place:
+        query = query.filter(Profile.native_place.ilike(f"%{native_place}%"))
+
     caste = args.get("sindhi_caste")
     if caste:
         query = query.filter(Profile.sindhi_caste.ilike(f"%{caste}%"))
+
+    sub_caste = args.get("sub_caste")
+    if sub_caste:
+        query = query.filter(Profile.sub_caste.ilike(f"%{sub_caste}%"))
 
     qualification = args.get("qualification")
     if qualification:
@@ -53,6 +70,64 @@ def apply_search_filters(query, args):
     occupation = args.get("occupation")
     if occupation:
         query = query.filter(Profile.occupation.ilike(f"%{occupation}%"))
+
+    company_business = args.get("company_business")
+    if company_business:
+        query = query.filter(Profile.company_business.ilike(f"%{company_business}%"))
+
+    mother_tongue = args.get("mother_tongue")
+    if mother_tongue:
+        query = query.filter(Profile.mother_tongue.ilike(f"%{mother_tongue}%"))
+
+    nationality = args.get("nationality")
+    if nationality:
+        query = query.filter(Profile.nationality.ilike(f"%{nationality}%"))
+
+    religion = args.get("religion")
+    if religion:
+        query = query.filter(Profile.religion.ilike(f"%{religion}%"))
+
+    community = args.get("community")
+    if community:
+        query = query.filter(Profile.community.ilike(f"%{community}%"))
+
+    rashi = args.get("rashi")
+    if rashi:
+        query = query.filter(Profile.rashi.ilike(f"%{rashi}%"))
+
+    nakshatra = args.get("nakshatra")
+    if nakshatra:
+        query = query.filter(Profile.nakshatra.ilike(f"%{nakshatra}%"))
+
+    mulank = args.get("mulank", type=int)
+    if mulank:
+        query = query.filter(Profile.mulank == mulank)
+
+    blood_group = args.get("blood_group")
+    if blood_group:
+        query = query.filter(Profile.blood_group == blood_group)
+
+    complexion = args.get("complexion")
+    if complexion:
+        query = query.filter(Profile.complexion == complexion)
+
+    body_type = args.get("body_type")
+    if body_type:
+        query = query.filter(Profile.body_type == body_type)
+
+    smoking = args.get("smoking")
+    if smoking:
+        query = query.filter(Profile.smoking == smoking)
+
+    drinking = args.get("drinking")
+    if drinking:
+        query = query.filter(Profile.drinking == drinking)
+
+    children = args.get("children")
+    if children == "0":
+        query = query.filter(db.or_(Profile.children == 0, Profile.children.is_(None)))
+    elif children == "1+":
+        query = query.filter(Profile.children >= 1)
 
     manglik = args.get("manglik")
     if manglik:
@@ -68,12 +143,32 @@ def apply_search_filters(query, args):
     elif kundli_available == "no":
         query = query.filter(Profile.kundli_available.is_(False))
 
+    verified = args.get("verified")
+    if verified == "yes":
+        query = query.filter(Profile.is_verified.is_(True))
+    elif verified == "no":
+        query = query.filter(Profile.is_verified.is_(False))
+
     height_min = args.get("height_min", type=int)
     if height_min:
         query = query.filter(Profile.height_cm >= height_min)
     height_max = args.get("height_max", type=int)
     if height_max:
         query = query.filter(Profile.height_cm <= height_max)
+
+    weight_min = args.get("weight_min", type=int)
+    if weight_min:
+        query = query.filter(Profile.weight_kg >= weight_min)
+    weight_max = args.get("weight_max", type=int)
+    if weight_max:
+        query = query.filter(Profile.weight_kg <= weight_max)
+
+    income_min = args.get("income_min", type=int)
+    if income_min:
+        query = query.filter(Profile.income_yearly >= income_min)
+    income_max = args.get("income_max", type=int)
+    if income_max:
+        query = query.filter(Profile.income_yearly <= income_max)
 
     age_min = args.get("age_min", type=int)
     age_max = args.get("age_max", type=int)

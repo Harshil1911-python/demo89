@@ -1,0 +1,131 @@
+{# Expects `form` (SearchFilterForm) and a unique `panel_id` string in context #}
+<div class="accordion" id="filterAccordion{{ panel_id }}">
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#fBasic{{ panel_id }}">Basic</button>
+    </h2>
+    <div id="fBasic{{ panel_id }}" class="accordion-collapse collapse show" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">{{ form.candidate_type.label(class="form-label") }}{{ form.candidate_type(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">
+          {{ form.age_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.age_min(class="form-control form-control-sm", placeholder="Min") }}
+            {{ form.age_max(class="form-control form-control-sm", placeholder="Max") }}
+          </div>
+        </div>
+        <div class="mb-3">{{ form.marital_status.label(class="form-label") }}{{ form.marital_status(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.children.label(class="form-label") }}{{ form.children(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.verified.label(class="form-label") }}{{ form.verified(class="form-select form-select-sm") }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fPhysical{{ panel_id }}">Physical</button>
+    </h2>
+    <div id="fPhysical{{ panel_id }}" class="accordion-collapse collapse" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">
+          {{ form.height_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.height_min(class="form-control form-control-sm", placeholder="Min cm") }}
+            {{ form.height_max(class="form-control form-control-sm", placeholder="Max cm") }}
+          </div>
+        </div>
+        <div class="mb-3">
+          {{ form.weight_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.weight_min(class="form-control form-control-sm", placeholder="Min kg") }}
+            {{ form.weight_max(class="form-control form-control-sm", placeholder="Max kg") }}
+          </div>
+        </div>
+        <div class="mb-3">{{ form.blood_group.label(class="form-label") }}{{ form.blood_group(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.complexion.label(class="form-label") }}{{ form.complexion(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.body_type.label(class="form-label") }}{{ form.body_type(class="form-select form-select-sm") }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fLocation{{ panel_id }}">Location</button>
+    </h2>
+    <div id="fLocation{{ panel_id }}" class="accordion-collapse collapse" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">{{ form.city.label(class="form-label") }}{{ form.city(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.state.label(class="form-label") }}{{ form.state(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.country.label(class="form-label") }}{{ form.country(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.native_place.label(class="form-label") }}{{ form.native_place(class="form-control form-control-sm") }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fCareer{{ panel_id }}">Education & Career</button>
+    </h2>
+    <div id="fCareer{{ panel_id }}" class="accordion-collapse collapse" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">{{ form.qualification.label(class="form-label") }}{{ form.qualification(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.occupation.label(class="form-label") }}{{ form.occupation(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.company_business.label(class="form-label") }}{{ form.company_business(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">
+          {{ form.income_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.income_min(class="form-control form-control-sm", placeholder="Min ₹") }}
+            {{ form.income_max(class="form-control form-control-sm", placeholder="Max ₹") }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fCommunity{{ panel_id }}">Community</button>
+    </h2>
+    <div id="fCommunity{{ panel_id }}" class="accordion-collapse collapse" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">{{ form.sindhi_caste.label(class="form-label") }}{{ form.sindhi_caste(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.sub_caste.label(class="form-label") }}{{ form.sub_caste(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.mother_tongue.label(class="form-label") }}{{ form.mother_tongue(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.religion.label(class="form-label") }}{{ form.religion(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.community.label(class="form-label") }}{{ form.community(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.nationality.label(class="form-label") }}{{ form.nationality(class="form-control form-control-sm") }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fLifestyle{{ panel_id }}">Lifestyle</button>
+    </h2>
+    <div id="fLifestyle{{ panel_id }}" class="accordion-collapse collapse" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">{{ form.food_preference.label(class="form-label") }}{{ form.food_preference(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.smoking.label(class="form-label") }}{{ form.smoking(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.drinking.label(class="form-label") }}{{ form.drinking(class="form-select form-select-sm") }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fAstro{{ panel_id }}">Astrology</button>
+    </h2>
+    <div id="fAstro{{ panel_id }}" class="accordion-collapse collapse" data-bs-parent="#filterAccordion{{ panel_id }}">
+      <div class="accordion-body">
+        <div class="mb-3">{{ form.manglik.label(class="form-label") }}{{ form.manglik(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.rashi.label(class="form-label") }}{{ form.rashi(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.nakshatra.label(class="form-label") }}{{ form.nakshatra(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.mulank.label(class="form-label") }}{{ form.mulank(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.kundli_available.label(class="form-label") }}{{ form.kundli_available(class="form-select form-select-sm") }}</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="mb-3 mt-3">{{ form.sort.label(class="form-label") }}{{ form.sort(class="form-select form-select-sm") }}</div>
