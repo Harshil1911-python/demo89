@@ -1,0 +1,22 @@
+# Render Blueprint — configured for local SQLite (no external database attached).
+# NOTE: Render's default filesystem is ephemeral — the SQLite DB and any uploaded
+# photos/documents will be wiped on every redeploy unless you attach a Render Disk.
+# To add persistence later: attach a Disk (e.g. mounted at /var/data), then set
+# DATABASE_URL=sqlite:////var/data/mbms.db as an env var below.
+services:
+  - type: web
+    name: citylight-sindhi-samaj-mbms
+    env: python
+    region: singapore
+    plan: starter
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "flask init-db && flask seed-demo && gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: wsgi.py
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.14.3

@@ -1,0 +1,110 @@
+{% extends "admin/base_admin.html" %}
+{% from "partials/pagination.html" import render_pagination %}
+{% block title %}All Profiles — {{ org_name }}{% endblock %}
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h3 class="display-font text-primary mb-0">View Persons</h3>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.export_csv') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> CSV</a>
+    <a href="{{ url_for('admin.export_excel') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+  </div>
+</div>
+
+<div class="btn-group mb-3 flex-wrap">
+  <a href="{{ url_for('admin.profiles_list') }}" class="btn btn-sm btn-outline-secondary {{ 'active' if not status }}">All</a>
+  <a href="{{ url_for('admin.profiles_list', status='pending') }}" class="btn btn-sm btn-outline-secondary {{ 'active' if status=='pending' }}">Pending</a>
+  <a href="{{ url_for('admin.profiles_list', status='approved') }}" class="btn btn-sm btn-outline-secondary {{ 'active' if status=='approved' }}">Approved</a>
+  <a href="{{ url_for('admin.profiles_list', status='rejected') }}" class="btn btn-sm btn-outline-secondary {{ 'active' if status=='rejected' }}">Rejected</a>
+  <a href="{{ url_for('admin.profiles_list', status='suspended') }}" class="btn btn-sm btn-outline-secondary {{ 'active' if status=='suspended' }}">Suspended</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-3">
+    <div class="filter-panel">
+      <h6 class="mb-3">Filters</h6>
+      <form method="GET">
+        {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+        <div class="mb-3">
+          {{ form.candidate_type.label(class="form-label") }}
+          {{ form.candidate_type(class="form-select form-select-sm") }}
+        </div>
+        <div class="mb-3">
+          {{ form.age_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.age_min(class="form-control form-control-sm", placeholder="Min") }}
+            {{ form.age_max(class="form-control form-control-sm", placeholder="Max") }}
+          </div>
+        </div>
+        <div class="mb-3">
+          {{ form.height_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.height_min(class="form-control form-control-sm", placeholder="Min cm") }}
+            {{ form.height_max(class="form-control form-control-sm", placeholder="Max cm") }}
+          </div>
+        </div>
+        <div class="mb-3">{{ form.marital_status.label(class="form-label") }}{{ form.marital_status(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.city.label(class="form-label") }}{{ form.city(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.sindhi_caste.label(class="form-label") }}{{ form.sindhi_caste(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.qualification.label(class="form-label") }}{{ form.qualification(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.occupation.label(class="form-label") }}{{ form.occupation(class="form-control form-control-sm") }}</div>
+        <div class="mb-3">{{ form.manglik.label(class="form-label") }}{{ form.manglik(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.food_preference.label(class="form-label") }}{{ form.food_preference(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.kundli_available.label(class="form-label") }}{{ form.kundli_available(class="form-select form-select-sm") }}</div>
+        <div class="mb-3">{{ form.sort.label(class="form-label") }}{{ form.sort(class="form-select form-select-sm") }}</div>
+        <button type="submit" class="btn btn-primary btn-sm w-100">Apply Filters</button>
+        <a href="{{ url_for('admin.profiles_list', status=status) }}" class="btn btn-outline-secondary btn-sm w-100 mt-2">Clear Filters</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <p class="text-muted small">{{ pagination.total }} profile(s) found</p>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+      {% for p in profiles %}
+      <div class="col">
+        <div class="profile-card">
+          <a href="{{ url_for('admin.profile_detail', public_id=p.public_id) }}" class="text-decoration-none text-reset">
+            <div class="photo-wrap">
+              <span class="status-ribbon">{{ p.candidate_type.upper() }}</span>
+              {% if p.featured_photo_path %}
+                <img src="{{ url_for('static', filename=p.featured_photo_path) }}" alt="{{ p.full_name }}">
+              {% else %}
+                <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                  <i class="bi bi-person-circle" style="font-size:3rem;"></i>
+                </div>
+              {% endif %}
+            </div>
+            <div class="body">
+              <div class="name">{{ p.full_name }}</div>
+              <div class="meta">{{ p.age or '-' }} yrs &middot; {{ p.height_display }}</div>
+              <div class="meta">{{ p.occupation or 'Occupation N/A' }}</div>
+              <div class="meta"><i class="bi bi-geo-alt"></i> {{ p.current_city or '-' }}</div>
+              <span class="code-tag">{{ p.profile_code }}</span>
+              <div class="mt-2">
+                <span class="badge badge-status-{{ p.approval_status }}">{{ p.approval_status.title() }}</span>
+              </div>
+            </div>
+          </a>
+          <div class="d-flex gap-2 p-2 pt-0">
+            <a href="{{ url_for('admin.profile_detail', public_id=p.public_id) }}" class="btn btn-sm btn-primary flex-fill">
+              <i class="bi bi-eye"></i> View / QR
+            </a>
+            <a href="{{ url_for('admin.edit_profile', public_id=p.public_id) }}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="POST" action="{{ url_for('admin.delete_profile', public_id=p.public_id) }}" onsubmit="return confirm('Move to recycle bin?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-muted">No profiles match your filters yet. Once candidates register (or you import via CSV), they'll appear here.</p>
+      {% endfor %}
+    </div>
+    {% set args_dict = request.args.to_dict() %}{% set _ = args_dict.pop('page', None) %}
+    {{ render_pagination(pagination, 'admin.profiles_list', **args_dict) }}
+  </div>
+</div>
+{% endblock %}
