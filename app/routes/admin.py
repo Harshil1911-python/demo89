@@ -19,6 +19,7 @@ from app.services.settings_service import (get_smtp_settings, save_smtp_settings
 from app.services.csv_service import export_profiles_csv, export_profiles_excel, import_profiles_csv
 from app.services.backup_service import create_backup_zip, list_backups
 from app.services.qr_service import generate_profile_qr
+from app.services.biodata_pdf import generate_biodata_pdf
 
 admin_bp = Blueprint("admin", __name__, template_folder="../templates/admin")
 
@@ -208,6 +209,31 @@ def reset_password(user_id):
     return render_template("admin/reset_password.html", form=form, user=user)
 
 
+@admin_bp.route("/profiles/add", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_profile():
+    from app.forms.profile_forms import ProfileForm
+    from app.services.intake_service import create_walkin_profile
+
+    form = ProfileForm()
+    if form.validate_on_submit():
+        auto_approve = request.form.get("auto_approve") == "on"
+        profile, temp_password, errors = create_walkin_profile(form, current_user.id, auto_approve=auto_approve)
+        if errors:
+            for e in errors:
+                flash(e, "danger")
+        else:
+            log_activity("admin_add_walkin_profile", user_id=current_user.id,
+                         target_type="profile", target_id=profile.id)
+            flash(f"Profile created for {profile.full_name} ({profile.profile_code}). "
+                  f"Temporary login password: {temp_password} — share this with the candidate; "
+                  f"they'll be asked to change it on first login.", "success")
+            return redirect(url_for("admin.profile_detail", public_id=profile.public_id))
+    return render_template("admin/add_profile_form.html", form=form, show_auto_approve=True,
+                            back_url=url_for("admin.profiles_list"))
+
+
 # ---------------------------------------------------------------- Profile Management
 @admin_bp.route("/profiles")
 @login_required
@@ -251,7 +277,12 @@ def review_profile(public_id):
             profile.approved_at = datetime.utcnow()
             if not profile.qr_path:
                 profile.qr_path = generate_profile_qr(profile)
-            flash(f"{profile.full_name}'s profile approved.", "success")
+            db.session.flush()
+            try:
+                profile.latest_biodata_pdf = generate_biodata_pdf(profile, org_name=current_app.config["ORG_NAME"])
+            except Exception:  # noqa: BLE001
+                pass  # biodata can still be generated on-demand later if this fails
+            flash(f"{profile.full_name}'s profile approved. Biodata PDF and QR code generated.", "success")
         elif action == "reject":
             profile.approval_status = "rejected"
             flash(f"{profile.full_name}'s profile rejected.", "warning")
@@ -420,14 +451,21 @@ def export_excel():
 @admin_required
 def import_csv():
     file = request.files.get("csv_file")
-    if not file or not file.filename.endswith(".csv"):
-        flash("Please upload a valid CSV file.", "danger")
+    if not file or not (file.filename or "").lower().endswith(".csv"):
+        flash("Please upload a valid CSV file (.csv extension required).", "danger")
         return redirect(url_for("admin.import_export"))
-    success, errors = import_profiles_csv(file.stream, current_user.id)
+    try:
+        success, errors = import_profiles_csv(file.stream, current_user.id)
+    except Exception as e:  # noqa: BLE001
+        db.session.rollback()
+        flash(f"Import failed unexpectedly: {str(e)}", "danger")
+        return redirect(url_for("admin.import_export"))
     log_activity("import_csv", user_id=current_user.id, details=f"success={success}, errors={len(errors)}")
-    flash(f"Imported {success} profiles successfully.", "success" if success else "warning")
+    flash(f"Imported {success} profile(s) successfully.", "success" if success else "warning")
     for err in errors[:20]:
         flash(err, "warning")
+    if len(errors) > 20:
+        flash(f"...and {len(errors) - 20} more row(s) had issues (not all shown).", "warning")
     return redirect(url_for("admin.import_export"))
 
 

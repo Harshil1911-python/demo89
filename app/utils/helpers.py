@@ -29,7 +29,7 @@ def find_possible_duplicates(profile, threshold=0.82):
 
 def apply_search_filters(query, args):
     """Applies GET-arg based filters onto a Profile query. `args` is a MultiDict-like (request.args)."""
-    from datetime import date
+    from datetime import date, datetime
 
     candidate_type = args.get("candidate_type")
     if candidate_type:
@@ -178,6 +178,26 @@ def apply_search_filters(query, args):
     if age_max:
         min_dob = date(date.today().year - age_max - 1, date.today().month, date.today().day)
         query = query.filter(Profile.date_of_birth >= min_dob)
+
+    birth_year_min = args.get("birth_year_min", type=int)
+    if birth_year_min:
+        query = query.filter(Profile.date_of_birth >= date(birth_year_min, 1, 1))
+    birth_year_max = args.get("birth_year_max", type=int)
+    if birth_year_max:
+        query = query.filter(Profile.date_of_birth <= date(birth_year_max, 12, 31))
+
+    dob_from_raw = args.get("dob_from")
+    if dob_from_raw:
+        try:
+            query = query.filter(Profile.date_of_birth >= datetime.strptime(dob_from_raw, "%Y-%m-%d").date())
+        except ValueError:
+            pass
+    dob_to_raw = args.get("dob_to")
+    if dob_to_raw:
+        try:
+            query = query.filter(Profile.date_of_birth <= datetime.strptime(dob_to_raw, "%Y-%m-%d").date())
+        except ValueError:
+            pass
 
     sort = args.get("sort", "recent")
     if sort == "updated":

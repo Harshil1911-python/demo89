@@ -16,6 +16,30 @@ from app.services.settings_service import log_activity
 member_bp = Blueprint("member", __name__, template_folder="../templates/member")
 
 
+@member_bp.route("/add-profile", methods=["GET", "POST"])
+@login_required
+@member_or_admin_required
+def add_profile():
+    from app.forms.profile_forms import ProfileForm
+    from app.services.intake_service import create_walkin_profile
+
+    form = ProfileForm()
+    if form.validate_on_submit():
+        profile, temp_password, errors = create_walkin_profile(form, current_user.id, auto_approve=False)
+        if errors:
+            for e in errors:
+                flash(e, "danger")
+        else:
+            log_activity("member_add_walkin_profile", user_id=current_user.id,
+                         target_type="profile", target_id=profile.id)
+            flash(f"Profile submitted for {profile.full_name} ({profile.profile_code}) and sent for "
+                  f"admin approval. Temporary login password: {temp_password} — share this with the "
+                  f"candidate; they'll be asked to change it on first login.", "success")
+            return redirect(url_for("member.dashboard"))
+    return render_template("admin/add_profile_form.html", form=form, show_auto_approve=False,
+                            back_url=url_for("member.dashboard"))
+
+
 @member_bp.route("/dashboard")
 @login_required
 @member_or_admin_required

@@ -7,17 +7,22 @@
   <p class="text-muted mb-4">Explore verified profiles, save favourites, and check Kundli compatibility.</p>
 
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
+      <a href="{{ url_for('member.add_profile') }}" class="text-decoration-none">
+        <div class="stat-widget"><div class="value"><i class="bi bi-person-plus"></i></div><div class="label">Add Profile (Walk-in)</div></div>
+      </a>
+    </div>
+    <div class="col-md-3">
       <a href="{{ url_for('member.browse') }}" class="text-decoration-none">
         <div class="stat-widget"><div class="value"><i class="bi bi-search"></i></div><div class="label">Browse All Profiles</div></div>
       </a>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <a href="{{ url_for('member.kundli_match_select') }}" class="text-decoration-none">
         <div class="stat-widget accent"><div class="value"><i class="bi bi-stars"></i></div><div class="label">Kundli Matching</div></div>
       </a>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <a href="{{ url_for('member.saved_searches') }}" class="text-decoration-none">
         <div class="stat-widget success"><div class="value"><i class="bi bi-bookmark"></i></div><div class="label">Saved Searches</div></div>
       </a>

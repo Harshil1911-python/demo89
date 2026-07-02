@@ -38,6 +38,20 @@
           <i class="bi bi-heart{{ '-fill' if favorite_ids and p.id in favorite_ids else '' }}"></i>
         </button>
       </form>
+      {% if p.qr_path %}
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#qrModal{{ p.id }}">
+        <i class="bi bi-qr-code"></i>
+      </button>
+      <div class="modal fade" id="qrModal{{ p.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content text-center p-3">
+            <h6 class="mb-2">{{ p.full_name }}'s QR Code</h6>
+            <img src="{{ url_for('static', filename=p.qr_path) }}" class="mx-auto" style="width:180px;">
+            <p class="text-muted small mt-2 mb-0">Scan to view the public profile page</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

@@ -5,6 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
   <h3 class="display-font text-primary mb-0">View Persons</h3>
   <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.add_profile') }}" class="btn btn-sm btn-accent"><i class="bi bi-person-plus"></i> Add Profile</a>
     <a href="{{ url_for('admin.export_csv') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> CSV</a>
     <a href="{{ url_for('admin.export_excel') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-excel"></i> Excel</a>
   </div>
@@ -62,8 +63,21 @@
           </a>
           <div class="d-flex gap-2 p-2 pt-0">
             <a href="{{ url_for('admin.profile_detail', public_id=p.public_id) }}" class="btn btn-sm btn-primary flex-fill">
-              <i class="bi bi-eye"></i> View / QR
+              <i class="bi bi-eye"></i> View
             </a>
+            {% if p.qr_path %}
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#qrModalAdmin{{ p.id }}">
+              <i class="bi bi-qr-code"></i>
+            </button>
+            <div class="modal fade" id="qrModalAdmin{{ p.id }}" tabindex="-1">
+              <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content text-center p-3">
+                  <h6 class="mb-2">{{ p.full_name }}'s QR Code</h6>
+                  <img src="{{ url_for('static', filename=p.qr_path) }}" class="mx-auto" style="width:180px;">
+                </div>
+              </div>
+            </div>
+            {% endif %}
             <a href="{{ url_for('admin.edit_profile', public_id=p.public_id) }}" class="btn btn-sm btn-outline-secondary">
               <i class="bi bi-pencil"></i>
             </a>

@@ -60,10 +60,19 @@ def _parse_dob(raw_value):
 def import_profiles_csv(file_stream, created_by_user_id):
     """
     Bulk import candidate profiles from a CSV file-like object.
-    Each row is committed independently (not via SAVEPOINT/begin_nested,
-    which is unreliable on SQLite without extra driver configuration) —
-    so a bad row is simply rolled back and skipped without affecting
-    rows already committed or rows still to come.
+
+    Performance notes (this matters a lot for large files on a single
+    web worker): we do NOT hash a fresh bcrypt password per row (bcrypt is
+    intentionally slow, ~200-300ms per call — at 12 rounds, a few hundred
+    rows could easily blow past a request timeout on its own). Instead we
+    hash the shared temporary password once and reuse that hash for every
+    imported row (all imported accounts share the same temp password and
+    are forced to change it on first login anyway). We also pre-fetch all
+    existing emails/phones in two queries instead of two-per-row, validate
+    everything in plain Python first, and perform a single database commit
+    at the end instead of one commit per row (each commit forces a disk
+    sync on SQLite, which is slow to do hundreds of times in a row).
+
     Returns (success_count, errors[list of strings]).
     """
     text = file_stream.read()
@@ -83,8 +92,22 @@ def import_profiles_csv(file_stream, created_by_user_id):
     if len(rows) > MAX_IMPORT_ROWS:
         return 0, [f"CSV has {len(rows)} rows, which exceeds the {MAX_IMPORT_ROWS}-row import limit. "
                    f"Please split the file into smaller batches."]
+    if not rows:
+        return 0, ["CSV file has no data rows."]
 
-    success = 0
+    # Hash the shared temporary password ONCE, not once per row.
+    shared_password_hash = User(full_name="_", email="_", role="groom")
+    shared_password_hash.set_password("Welcome@123")
+    shared_password_hash = shared_password_hash.password_hash
+
+    # Pre-fetch existing emails/phones once instead of 2 queries per row.
+    existing_emails = {e for (e,) in db.session.query(User.email).all()}
+    existing_phones = {p for (p,) in db.session.query(User.phone).all() if p}
+
+    seen_emails_in_batch = set()
+    seen_phones_in_batch = set()
+
+    valid_rows = []  # list of dicts ready to build User/Profile objects
     errors = []
 
     for i, row in enumerate(rows, start=2):
@@ -108,49 +131,64 @@ def import_profiles_csv(file_stream, created_by_user_id):
 
             dob = _parse_dob(row.get("date_of_birth"))
 
-            if User.query.filter_by(email=email).first():
+            if email in existing_emails:
                 raise ValueError(f"email {email} already exists, skipped")
-            if User.query.filter_by(phone=phone).first():
+            if phone in existing_phones:
                 raise ValueError(f"phone {phone} already exists, skipped")
+            if email in seen_emails_in_batch:
+                raise ValueError(f"email {email} is duplicated elsewhere in this CSV, skipped")
+            if phone in seen_phones_in_batch:
+                raise ValueError(f"phone {phone} is duplicated elsewhere in this CSV, skipped")
 
+            seen_emails_in_batch.add(email)
+            seen_phones_in_batch.add(phone)
+
+            valid_rows.append({
+                "full_name": full_name, "email": email, "phone": phone,
+                "gender": gender, "candidate_type": candidate_type, "dob": dob,
+                "current_city": (row.get("current_city") or "").strip() or None,
+                "occupation": (row.get("occupation") or "").strip() or None,
+                "qualification": (row.get("qualification") or "").strip() or None,
+                "sindhi_caste": (row.get("sindhi_caste") or "").strip() or None,
+            })
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"Row {i}: {str(e)}")
+
+    if not valid_rows:
+        return 0, errors
+
+    try:
+        created_profiles = []
+        for data in valid_rows:
             user = User(
-                full_name=full_name,
-                email=email,
-                phone=phone,
-                role=candidate_type,
-                status="active",
-                created_by_id=created_by_user_id,
-                must_change_password=True,
+                full_name=data["full_name"], email=data["email"], phone=data["phone"],
+                role=data["candidate_type"], status="active",
+                created_by_id=created_by_user_id, must_change_password=True,
             )
-            user.set_password("Welcome@123")
+            user.password_hash = shared_password_hash  # reuse pre-computed hash
             db.session.add(user)
             db.session.flush()
 
             profile = Profile(
-                user_id=user.id,
-                full_name=full_name,
-                gender=gender,
-                candidate_type=candidate_type,
-                date_of_birth=dob,
-                current_city=(row.get("current_city") or "").strip() or None,
-                occupation=(row.get("occupation") or "").strip() or None,
-                qualification=(row.get("qualification") or "").strip() or None,
-                phone=phone,
-                email=email,
-                sindhi_caste=(row.get("sindhi_caste") or "").strip() or None,
-                approval_status="pending",
+                user_id=user.id, full_name=data["full_name"], gender=data["gender"],
+                candidate_type=data["candidate_type"], date_of_birth=data["dob"],
+                current_city=data["current_city"], occupation=data["occupation"],
+                qualification=data["qualification"], phone=data["phone"], email=data["email"],
+                sindhi_caste=data["sindhi_caste"], approval_status="pending",
             )
             db.session.add(profile)
-            db.session.flush()
+            created_profiles.append(profile)
+
+        db.session.flush()  # assign profile.id values
+        for profile in created_profiles:
             profile.profile_code = _generate_profile_code(profile)
 
-            db.session.commit()
-            success += 1
-        except Exception as e:  # noqa: BLE001
-            db.session.rollback()
-            errors.append(f"Row {i}: {str(e)}")
-
-    return success, errors
+        db.session.commit()
+        return len(created_profiles), errors
+    except Exception as e:  # noqa: BLE001
+        db.session.rollback()
+        errors.append(f"Batch insert failed, no rows were imported: {str(e)}")
+        return 0, errors
 
 
 def _generate_profile_code(profile):

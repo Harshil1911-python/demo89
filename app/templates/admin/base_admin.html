@@ -7,10 +7,12 @@
         <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}"><i class="bi bi-speedometer2"></i> Dashboard</a>
         <div class="section-title">Profiles</div>
         <a href="{{ url_for('admin.profiles_list') }}" class="{{ 'active' if request.endpoint and 'profile' in request.endpoint }}"><i class="bi bi-people"></i> All Profiles</a>
+        <a href="{{ url_for('admin.add_profile') }}" class="{{ 'active' if request.endpoint == 'admin.add_profile' }}"><i class="bi bi-person-plus"></i> Add Walk-in Profile</a>
         <a href="{{ url_for('admin.recycle_bin') }}" class="{{ 'active' if request.endpoint == 'admin.recycle_bin' }}"><i class="bi bi-trash"></i> Recycle Bin</a>
         <div class="section-title">Users</div>
         <a href="{{ url_for('admin.users_list') }}" class="{{ 'active' if request.endpoint and 'user' in request.endpoint }}"><i class="bi bi-person-badge"></i> Manage Users</a>
         <div class="section-title">Data</div>
+        <a href="{{ url_for('member.kundli_match_select') }}" class="{{ 'active' if request.endpoint and 'kundli' in request.endpoint }}"><i class="bi bi-stars"></i> Kundli Matching</a>
         <a href="{{ url_for('admin.import_export') }}" class="{{ 'active' if request.endpoint == 'admin.import_export' }}"><i class="bi bi-arrow-left-right"></i> Import / Export</a>
         <a href="{{ url_for('admin.backup_page') }}" class="{{ 'active' if request.endpoint == 'admin.backup_page' }}"><i class="bi bi-hdd"></i> Backup / Restore</a>
         <div class="section-title">Content</div>

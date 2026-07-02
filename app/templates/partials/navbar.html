@@ -23,6 +23,7 @@
         {% elif current_user.is_member %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('member.dashboard') }}">Dashboard</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('member.browse') }}">Browse Profiles</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('member.add_profile') }}">Add Profile</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('member.kundli_match_select') }}">Kundli Matching</a></li>
         {% else %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('profile.create_or_edit') }}">My Biodata</a></li>

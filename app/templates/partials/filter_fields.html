@@ -15,6 +15,19 @@
             {{ form.age_max(class="form-control form-control-sm", placeholder="Max") }}
           </div>
         </div>
+        <div class="mb-3">
+          {{ form.birth_year_min.label }}
+          <div class="d-flex gap-2">
+            {{ form.birth_year_min(class="form-control form-control-sm", placeholder="e.g. 1990") }}
+            {{ form.birth_year_max(class="form-control form-control-sm", placeholder="e.g. 2000") }}
+          </div>
+        </div>
+        <div class="mb-3">
+          {{ form.dob_from.label(class="form-label") }}
+          {{ form.dob_from(class="form-control form-control-sm mb-1", type="date") }}
+          {{ form.dob_to.label(class="form-label") }}
+          {{ form.dob_to(class="form-control form-control-sm", type="date") }}
+        </div>
         <div class="mb-3">{{ form.marital_status.label(class="form-label") }}{{ form.marital_status(class="form-select form-select-sm") }}</div>
         <div class="mb-3">{{ form.children.label(class="form-label") }}{{ form.children(class="form-select form-select-sm") }}</div>
         <div class="mb-3">{{ form.verified.label(class="form-label") }}{{ form.verified(class="form-select form-select-sm") }}</div>
